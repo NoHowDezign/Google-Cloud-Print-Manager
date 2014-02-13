@@ -14,3 +14,9 @@
 !/src/
 *.db
 props.json
+
+#Ignore settings for IntelliJ-IDEA
+/out
+*.iml
+*.ipr
+*.iws
