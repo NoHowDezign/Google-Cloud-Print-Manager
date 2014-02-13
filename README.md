@@ -1,4 +1,6 @@
-Google-Cloud-Print-Manager
+Google Cloud Print Manager
 ==========================
 
-An application to give the ability to manage cloud printers for a business or workplace environment.
+Credits
+-------
+* Cloud Print API - https://github.com/jittagornp/GoogleCloudPrint
