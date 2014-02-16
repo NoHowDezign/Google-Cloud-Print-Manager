@@ -3,7 +3,9 @@ apply plugin: 'eclipse'
 apply plugin: 'idea'
 apply plugin: 'application'
 
-defaultTasks 'compile' //Seperate by commas for more
+defaultTasks 'compile'
+
+mainClassName = 'com.nohowdezign.gcpmanager.Main'
 
 repositories {
 	mavenCentral()
