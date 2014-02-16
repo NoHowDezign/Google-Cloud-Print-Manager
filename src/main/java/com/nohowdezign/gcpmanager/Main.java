@@ -9,6 +9,7 @@ import java.text.SimpleDateFormat;
 import com.nohowdezign.gcpmanager.management.JobLimiter;
 import com.nohowdezign.gcpmanager.management.JobStorageManager;
 import com.nohowdezign.gcpmanager.management.JobStorageManagerThread;
+import com.nohowdezign.gcpmanager.printers.PrinterManager;
 import com.nohowdezign.gcpmanager.website.auth.AuthenticationManager;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
@@ -95,6 +96,29 @@ public class Main {
 
         Thread printJobManager = new Thread(new JobStorageManagerThread(), "JobStorageManager");
         printJobManager.start();
+
+        try {
+            if(System.getProperty("os.name").toLowerCase().startsWith("win")) {
+                logger.error("Your operating system is not supported. Please switch to linux ya noob.");
+                System.exit(1);
+            } else {
+                PrinterManager printerManager = new PrinterManager(cloudPrint);
+
+                File cupsPrinterDir = new File("/etc/cups/ppd");
+
+                if(cupsPrinterDir.isDirectory() && cupsPrinterDir.canRead()) {
+                    for(File cupsPrinterPPD : cupsPrinterDir.listFiles()) {
+                        //Init all of the CUPS printers in the manager
+                        printerManager.initializePrinter(cupsPrinterPPD, cupsPrinterPPD.getName());
+                    }
+                } else {
+                    logger.error("Please run this with a higher access level.");
+                    System.exit(1);
+                }
+            }
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
         
         while(true) {
         	try {

@@ -31,8 +31,8 @@ import th.co.geniustree.google.cloudprint.api.model.response.RegisterPrinterResp
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.net.URL;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class PrinterManager {
@@ -42,8 +42,10 @@ public class PrinterManager {
         this.cloudPrint = cloudPrint;
     }
 
-    public void initializePrinters() {
-        //
+    public void initializePrinter(File printerDefenitionFile, String nameOfPrinterToCheck) throws Exception {
+        if(doesPrinterExist(nameOfPrinterToCheck)) {
+            registerPrinter(printerDefenitionFile, nameOfPrinterToCheck);
+        }
     }
 
     /**
@@ -60,18 +62,14 @@ public class PrinterManager {
         return false;
     }
 
-    private void registerPrinter(String printerName) throws Exception {
+    private void registerPrinter(File capabilitiesFile, String printerName) throws Exception {
         InputStream inputStream = null;
 
-        File capabilitiesFile = new File(xpsURL.getPath());
         inputStream = new FileInputStream(capabilitiesFile);
 
         Printer printer = new Printer();
-        printer.setName(printerName);
-        printer.setDisplayName(printerName);
         printer.setProxy("pamarin");
         Set<String> tags = new HashSet<String>();
-        tags.add("test");
         tags.add("register");
         printer.setTags(tags);
 
