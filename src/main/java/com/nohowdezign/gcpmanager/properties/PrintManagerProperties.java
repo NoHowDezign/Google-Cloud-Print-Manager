@@ -1,4 +1,4 @@
-package com.nohowdezign.gcpmanager;
+package com.nohowdezign.gcpmanager.properties;
 
 /**
  * Copyright 2013 nh_99 Development

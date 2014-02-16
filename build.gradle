@@ -27,6 +27,7 @@ dependencies {
 	compile group: 'org.igniterealtime.smack', name: 'smackx', version: '3.2.1'
     compile group: 'com.corundumstudio.socketio', name: 'netty-socketio', version: '1.6.2'
 	compile group: 'org.cups4j', name: 'cups4j', version: '0.6.4'
+	compile group: 'th.co.geniustree', name: 'google-cloudprint-api', version: '1.0'
 }
 
 //task wrapper(type: Wrapper) {

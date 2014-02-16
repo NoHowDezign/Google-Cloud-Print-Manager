@@ -26,9 +26,7 @@ package com.nohowdezign.gcpmanager.management;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 public class JobStorageManager {
     private static List<File> jobFilesDownloaded = new ArrayList<>();
@@ -38,11 +36,17 @@ public class JobStorageManager {
     public void checkLifetimeOfFiles() {
         if(!jobFilesDownloaded.isEmpty()) {
             for(File jobFileDownloaded : jobFilesDownloaded) {
-                String[] splitDaysAndHours = getCurrentTime().split(" ");
-                String[] splitDays = splitDaysAndHours[0].split("-");
-                String timeToCheckWith = splitDays[0] + String.valueOf(Integer.valueOf(splitDays[1]) - timeToKeepFileInDays) + splitDays[2] + " ......";
+                String modificationDate = sdf.format(jobFileDownloaded.lastModified());
+                String[] splitMonthAndHours = modificationDate.split(" ");
+                String[] mmDdYyyy = splitMonthAndHours[0].split("-");
+                int month = Integer.valueOf(mmDdYyyy[0]);
+                int day = Integer.valueOf(mmDdYyyy[1]);
+                int year = Integer.valueOf(mmDdYyyy[2]);
 
-                if(sdf.format(jobFileDownloaded.lastModified()).matches(timeToCheckWith)) {
+                GregorianCalendar now = new GregorianCalendar();
+                GregorianCalendar dateToCheckForFile = new GregorianCalendar(year, month, day);
+                dateToCheckForFile.roll(GregorianCalendar.DATE, 3);
+                if(dateToCheckForFile.get(GregorianCalendar.DATE) == now.get(GregorianCalendar.DATE)) {
                     jobFileDownloaded.delete();
                     System.out.println("Just deleted a file.");
                 }
@@ -52,12 +56,6 @@ public class JobStorageManager {
 
     public void addJobFileDownloaded(File fileDownloaded) {
         jobFilesDownloaded.add(fileDownloaded);
-    }
-
-    private String getCurrentTime() {
-        Date now = new Date();
-
-        return sdf.format(now.getTime());
     }
 
 }

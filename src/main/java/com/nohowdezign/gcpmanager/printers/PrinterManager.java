@@ -64,25 +64,29 @@ public class PrinterManager {
 
     private void registerPrinter(File capabilitiesFile, String printerName) throws Exception {
         InputStream inputStream = null;
-
         inputStream = new FileInputStream(capabilitiesFile);
 
+        RegisterPrinterResponse response = cloudPrint.registerPrinter(
+                createPrinterWithCapabilities(inputStream, capabilitiesFile));
+        if (!response.isSuccess()) {
+            return;
+        }
+    }
+
+    private Printer createPrinterWithCapabilities(InputStream inputStream,
+                                                  File capabilitiesFile) throws Exception {
         Printer printer = new Printer();
         printer.setProxy("pamarin");
         Set<String> tags = new HashSet<String>();
         tags.add("register");
         printer.setTags(tags);
-
         String capsHash = DigestUtils.sha512Hex(inputStream);
         printer.setCapsHash(capsHash);
         printer.setStatus("REGISTER");
         printer.setCapabilities(capabilitiesFile);
         printer.setDefaults(capabilitiesFile);
 
-        RegisterPrinterResponse response = cloudPrint.registerPrinter(printer);
-        if (!response.isSuccess()) {
-            return;
-        }
+        return printer;
     }
 
 }

@@ -72,19 +72,14 @@ public class JobLimiter {
     //cannot print at and an end time
     private boolean canJobBePrintedAtThisTime(int[] timeRestraint) {
         String[] currentSystemHour = getCurrentTime().split(":");
-
-        logger.info("Current time: " + currentSystemHour[0]);
-
         if(Integer.valueOf(currentSystemHour[0]) > timeRestraint[0] || Integer.valueOf(currentSystemHour[0]) < timeRestraint[1]) {
             return false;
         }
-
         return true;
     }
 
     private String getCurrentTime() {
         Date now = new Date();
-
         return sdf.format(now.getTime());
     }
 

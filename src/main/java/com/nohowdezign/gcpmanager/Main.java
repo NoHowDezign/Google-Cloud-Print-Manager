@@ -1,21 +1,17 @@
 package com.nohowdezign.gcpmanager;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.Reader;
 import java.text.SimpleDateFormat;
 
 import com.nohowdezign.gcpmanager.management.JobLimiter;
 import com.nohowdezign.gcpmanager.management.JobStorageManager;
 import com.nohowdezign.gcpmanager.management.JobStorageManagerThread;
 import com.nohowdezign.gcpmanager.printers.PrinterManager;
-import com.nohowdezign.gcpmanager.website.auth.AuthenticationManager;
+import com.nohowdezign.gcpmanager.properties.PrintManagerProperties;
+import com.nohowdezign.gcpmanager.properties.PropertiesManager;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.gson.Gson;
 
 import th.co.geniustree.google.cloudprint.api.GoogleCloudPrint;
 import th.co.geniustree.google.cloudprint.api.exception.CloudPrintAuthenticationException;
@@ -44,77 +40,28 @@ import th.co.geniustree.google.cloudprint.api.model.response.FecthJobResponse;
 public class Main {
 	private static final Logger logger = LoggerFactory.getLogger(Main.class);
     private static final GoogleCloudPrint cloudPrint = new GoogleCloudPrint();
-    private static Gson gson = new Gson();
     private static int amountOfPagesPerPrintJob;
     private static int[] timeRestraintsForPrinter;
+    private static String email;
+    private static String password;
+    private static String printerId;
 	
-	public final static void main(String[] args) {
-		//Remove old log, it does not need to be there anymore.
-		File oldLog = new File("./CloudPrintManager.log");
-        
-        if(oldLog.exists()) {
-        	oldLog.delete();
-        }
-        
-        //Create a file reader for the props file
-		Reader propsStream = null;
-		try {
-			propsStream = new FileReader("./props.json");
-		} catch (FileNotFoundException e1) {
-			e1.printStackTrace();
-		}
-		
-		PrintManagerProperties props = null;
-		if(propsStream != null) {
-			props = gson.fromJson(propsStream, PrintManagerProperties.class);
-		} else {
-			logger.error("Property file does not exist. Please create one.");
-		}
-		
-		//Set the variables to what is in the props file
-        String email = props.getEmail();
-        String password = props.getPassword();
-        String printerId = props.getPrinterId();
-        amountOfPagesPerPrintJob = props.getAmountOfPagesPerPrintJob();
-        timeRestraintsForPrinter = props.getTimeRestraintsForPrinter();
+	public static void main(String[] args) {
+        PropertiesManager propertiesManager = new PropertiesManager();
+        propertiesManager.loadProperties();
+        setProperties(propertiesManager.getProperties());
 
-        JobStorageManager.timeToKeepFileInDays = props.getTimeToKeepFileInDays();
-
-        //AuthenticationManager authenticationManager = new AuthenticationManager();
-        //authenticationManager.setPasswordToUse(props.getAdministrativePassword());
-        //authenticationManager.initialize(1337); //Start the authentication manager on port 1337
-
-        try {
-			cloudPrint.connect(email, password, "cloudprintmanager-1.0");
-		} catch (CloudPrintAuthenticationException e) {
-			logger.error(e.getMessage());
-		}
-        
-        //TODO: Get a working website ready
-        //Thread adminConsole = new Thread(new HttpServer(80), "HttpServer");
-        //adminConsole.start();
+        connectToCloudPrintService();
 
         Thread printJobManager = new Thread(new JobStorageManagerThread(), "JobStorageManager");
         printJobManager.start();
 
         try {
-            if(System.getProperty("os.name").toLowerCase().startsWith("win")) {
+            if(isOperatingSystemWindows()) {
                 logger.error("Your operating system is not supported. Please switch to linux ya noob.");
                 System.exit(1);
             } else {
-                PrinterManager printerManager = new PrinterManager(cloudPrint);
-
-                File cupsPrinterDir = new File("/etc/cups/ppd");
-
-                if(cupsPrinterDir.isDirectory() && cupsPrinterDir.canRead()) {
-                    for(File cupsPrinterPPD : cupsPrinterDir.listFiles()) {
-                        //Init all of the CUPS printers in the manager
-                        printerManager.initializePrinter(cupsPrinterPPD, cupsPrinterPPD.getName());
-                    }
-                } else {
-                    logger.error("Please run this with a higher access level.");
-                    System.exit(1);
-                }
+                initializePrinterManager();
             }
         } catch(Exception e) {
             e.printStackTrace();
@@ -169,6 +116,44 @@ public class Main {
             logger.info("mod date: {}", sdf.format(outputFile.lastModified()));
             JobStorageManager manager = new JobStorageManager();
             manager.addJobFileDownloaded(outputFile);
+        }
+    }
+
+    private static void setProperties(PrintManagerProperties props) {
+        email = props.getEmail();
+        password = props.getPassword();
+        printerId = props.getPrinterId();
+        amountOfPagesPerPrintJob = props.getAmountOfPagesPerPrintJob();
+        timeRestraintsForPrinter = props.getTimeRestraintsForPrinter();
+        JobStorageManager.timeToKeepFileInDays = props.getTimeToKeepFileInDays();
+    }
+
+    private static void connectToCloudPrintService() {
+        try {
+            cloudPrint.connect(email, password, "cloudprintmanager-1.0");
+        } catch (CloudPrintAuthenticationException e) {
+            logger.error(e.getMessage());
+        }
+    }
+
+    private static boolean isOperatingSystemWindows() {
+        if(System.getProperty("os.name").toLowerCase().startsWith(("win"))) {
+            return true;
+        }
+        return false;
+    }
+
+    private static void initializePrinterManager() throws Exception {
+        PrinterManager printerManager = new PrinterManager(cloudPrint);
+        File cupsPrinterDir = new File("/etc/cups/ppd");
+
+        if(cupsPrinterDir.isDirectory() && cupsPrinterDir.canRead()) {
+            for(File cupsPrinterPPD : cupsPrinterDir.listFiles()) {
+                printerManager.initializePrinter(cupsPrinterPPD, cupsPrinterPPD.getName());
+            }
+        } else {
+            logger.error("Please run this with a higher access level.");
+            System.exit(1);
         }
     }
 	
